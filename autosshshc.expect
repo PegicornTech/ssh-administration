@@ -1,0 +1,30 @@
+#!/usr/bin/expect
+
+set host [lindex $argv 0]
+set username [lindex $argv 1]
+set password [lindex $argv 2]
+set local_script_path [lindex $argv 3]
+set remote_script_name [lindex $argv 4]
+
+spawn ssh $username@$host
+expect {
+    "assword:" {
+        send "$password\r"
+        exp_continue
+    }
+    "(yes/no)?" {
+        send "yes\r"
+        exp_continue
+    }
+    "$username@" {
+        send "sudo -i\r"
+        expect "assword:"
+        send "$password\r"
+        expect "#"
+        send "cp $local_script_path /home/$username/$remote_script_name\r"
+        send "chmod +x /home/$username/$remote_script_name\r"
+        send "nohup sh -c '/home/$username/$remote_script_name' > script_output.log 2>&1 &\r"
+        send "exit\r"
+    }
+}
+
